@@ -1,0 +1,167 @@
+<div id="map-wrap" style="border:1px solid var(--border);border-radius:8px;margin:0 0 24px;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2)">
+<div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--fg2)">
+<span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#639922"></span>Technical</span>
+<span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#1D9E75"></span>UK codes</span>
+<span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#378ADD"></span>VCM</span>
+<span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#7F77DD"></span>GHG acct.</span>
+<span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#D85A30"></span>Policy</span>
+<span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#BA7517"></span>Business</span>
+</div>
+<button id="map-toggle" onclick="toggleMap()" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--fg2);padding:2px 6px">collapse ▲</button>
+</div>
+<div id="map-body" style="padding:8px">
+<svg id="g" width="100%" viewBox="0 0 680 580"></svg>
+</div>
+</div>
+
+<script>
+var mapOpen=true;
+function toggleMap(){
+  mapOpen=!mapOpen;
+  document.getElementById('map-body').style.display=mapOpen?'block':'none';
+  document.getElementById('map-toggle').textContent=mapOpen?'collapse ▲':'expand ▼';
+}
+(function(){
+var currentNode='{{ include.current | default: "" }}';
+var dk=matchMedia('(prefers-color-scheme:dark)').matches;
+var cats={
+tech:{f:dk?'#27500A':'#EAF3DE',s:'#639922',t:dk?'#C0DD97':'#27500A'},
+ukcode:{f:dk?'#085041':'#E1F5EE',s:'#1D9E75',t:dk?'#9FE1CB':'#085041'},
+vcm:{f:dk?'#0C447C':'#E6F1FB',s:'#378ADD',t:dk?'#B5D4F4':'#0C447C'},
+acct:{f:dk?'#3C3489':'#EEEDFE',s:'#7F77DD',t:dk?'#CECBF6':'#3C3489'},
+pol:{f:dk?'#712B13':'#FAECE7',s:'#D85A30',t:dk?'#F5C4B3':'#712B13'},
+biz:{f:dk?'#633806':'#FAEEDA',s:'#BA7517',t:dk?'#FAC775':'#633806'}
+};
+var baseurl='{{ site.baseurl | default: "" }}';
+var colX=[22,175,328,494],colW=[128,128,128,138];
+var colLabels=['Land & field science','Codes & markets','GHG accounting','Policy & business'];
+var tierY=[42,230,440];
+var bh=28,bg=10;
+var items=[
+{id:'soil',l:'Soil science',slug:'soil-science',c:0,tier:2,cat:'tech',idx:0},
+{id:'gis',l:'GIS / remote sensing',slug:'gis-remote-sensing',c:0,tier:2,cat:'tech',idx:1},
+{id:'mrv',l:'MRV',slug:'mrv',c:0,tier:1,cat:'tech',idx:0},
+{id:'audit',l:'Farm carbon auditing',slug:'farm-carbon-auditing',c:0,tier:1,cat:'tech',idx:1},
+{id:'agro',l:'Agroforestry',slug:'agroforestry',c:0,tier:1,cat:'tech',idx:2},
+{id:'icvcm',l:'ICVCM CCPs',slug:'icvcm-ccps',c:1,tier:0,cat:'vcm',idx:0},
+{id:'bsi',l:'BSI Nature Inv. Stds',slug:'bsi-nature-investment-standards',c:1,tier:0,cat:'ukcode',idx:1},
+{id:'reg',l:'Carbon Registry',slug:'uk-land-carbon-registry',c:1,tier:0,cat:'ukcode',idx:2},
+{id:'wcc',l:'Woodland Carbon Code',slug:'woodland-carbon-code',c:1,tier:1,cat:'ukcode',idx:0},
+{id:'pc',l:'Peatland Code',slug:'peatland-code',c:1,tier:1,cat:'ukcode',idx:1},
+{id:'ver',l:'Verra VM0042',slug:'verra-vm0042',c:1,tier:1,cat:'vcm',idx:2},
+{id:'gs',l:'Gold Standard',slug:'gold-standard',c:1,tier:1,cat:'vcm',idx:3},
+{id:'issb',l:'ISSB / UK SRS',slug:'issb-uk-srs',c:2,tier:0,cat:'acct',idx:0},
+{id:'sbti',l:'SBTi FLAG',slug:'sbti-flag',c:2,tier:1,cat:'acct',idx:0},
+{id:'ghgp',l:'GHG Protocol',slug:'ghg-protocol',c:2,tier:2,cat:'acct',idx:0},
+{id:'iso',l:'ISO 14064',slug:'iso-14064',c:2,tier:2,cat:'acct',idx:1},
+{id:'lca',l:'LCA',slug:'lca',c:2,tier:2,cat:'acct',idx:2},
+{id:'ccp',l:'Scotland CCP',slug:'scotland-ccp',c:3,tier:0,cat:'pol',idx:0},
+{id:'agact',l:'Ag Act / FSF',slug:'agriculture-act-future-support',c:3,tier:0,cat:'pol',idx:1},
+{id:'ets',l:'UK ETS / GGR',slug:'uk-ets-ggr',c:3,tier:0,cat:'pol',idx:2},
+{id:'crcf',l:'EU CRCF',slug:'eu-crcf',c:3,tier:0,cat:'pol',idx:3},
+{id:'sc3',l:'Scope 3',slug:'scope-3',c:3,tier:1,cat:'biz',idx:0},
+{id:'ins',l:'Insetting',slug:'insetting',c:3,tier:1,cat:'biz',idx:1},
+{id:'tnfd',l:'TNFD',slug:'tnfd',c:3,tier:1,cat:'biz',idx:2},
+{id:'nat',l:'Natural capital',slug:'natural-capital',c:3,tier:1,cat:'biz',idx:3}
+];
+var edges=[
+['ghgp','iso'],['ghgp','sc3'],['ghgp','lca'],['ghgp','mrv'],
+['iso','mrv'],
+['sbti','sc3'],['sbti','lca'],['sbti','audit'],
+['issb','tnfd'],
+['mrv','soil'],['mrv','gis'],['mrv','audit'],['mrv','wcc'],['mrv','pc'],['mrv','ver'],['mrv','gs'],
+['soil','agro'],['soil','pc'],
+['gis','wcc'],
+['audit','ccp'],
+['agro','ccp'],['agro','agact'],
+['wcc','pc'],['wcc','reg'],['wcc','bsi'],['wcc','ets'],
+['pc','reg'],['pc','bsi'],
+['bsi','icvcm'],['bsi','tnfd'],['bsi','nat'],['bsi','ets'],
+['ver','icvcm'],['ver','crcf'],['ver','ins'],['ver','gs'],
+['gs','icvcm'],['gs','crcf'],['gs','ins'],
+['icvcm','ets'],
+['ccp','agact'],
+['ets','crcf'],
+['sc3','lca'],['sc3','ins'],
+['nat','tnfd']
+];
+var nmap={};
+items.forEach(function(n){
+  n.rx=colX[n.c]; n.ry=tierY[n.tier]+n.idx*(bh+bg);
+  n.rw=colW[n.c]; n.rh=bh;
+  n.cx=n.rx+n.rw/2; n.cy=n.ry+bh/2;
+  nmap[n.id]=n;
+});
+var adj={};
+items.forEach(function(n){adj[n.id]=[]});
+edges.forEach(function(e){adj[e[0]].push(e[1]);adj[e[1]].push(e[0])});
+var svg=document.getElementById('g');
+var ns='http://www.w3.org/2000/svg';
+function el(tag,attrs){var e=document.createElementNS(ns,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);return e}
+var sep1y=215,sep2y=425;
+svg.appendChild(el('line',{x1:20,y1:sep1y,x2:645,y2:sep1y,stroke:dk?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.08)','stroke-width':'0.5','stroke-dasharray':'4 3'}));
+svg.appendChild(el('line',{x1:20,y1:sep2y,x2:645,y2:sep2y,stroke:dk?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.08)','stroke-width':'0.5','stroke-dasharray':'4 3'}));
+[{text:'Strategic context',y:35},{text:'Applied standards & tools',y:sep1y+8},{text:'Foundations',y:sep2y+8}].forEach(function(tl){
+  var t=el('text',{x:645,y:tl.y,'text-anchor':'end','font-family':'system-ui,sans-serif','font-size':'10px',fill:dk?'rgba(255,255,255,0.3)':'rgba(0,0,0,0.3)'});
+  t.textContent=tl.text; svg.appendChild(t);
+});
+colLabels.forEach(function(label,i){
+  var t=el('text',{x:colX[i]+colW[i]/2,y:14,'text-anchor':'middle','font-family':'system-ui,sans-serif','font-size':'11px','font-weight':'600',fill:dk?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)'});
+  t.textContent=label; svg.appendChild(t);
+});
+var linkLayer=el('g',{});
+svg.appendChild(linkLayer);
+var boxEls={};
+items.forEach(function(n){
+  var g=el('g',{cursor:'pointer'});
+  var isCurrent=n.id===currentNode;
+  var r=el('rect',{x:n.rx,y:n.ry,width:n.rw,height:n.rh,rx:'5',fill:cats[n.cat].f,stroke:cats[n.cat].s,'stroke-width':isCurrent?'2.5':'1'});
+  var t=el('text',{x:n.cx,y:n.cy,'text-anchor':'middle','dominant-baseline':'central','font-family':'system-ui,sans-serif','font-size':'11px','font-weight':isCurrent?'700':'400',fill:cats[n.cat].t});
+  t.textContent=n.l;
+  var a=el('a',{});
+  a.setAttributeNS('http://www.w3.org/1999/xlink','href',baseurl+'/notes/'+n.slug);
+  a.appendChild(r); a.appendChild(t);
+  g.appendChild(a);
+  g.addEventListener('mouseenter',function(){highlight(n.id)});
+  g.addEventListener('mouseleave',unhighlight);
+  svg.appendChild(g);
+  boxEls[n.id]={g:g,r:r,t:t};
+});
+function edgePt(src,tgt){
+  var dx=tgt.cx-src.cx,dy=tgt.cy-src.cy;
+  var ax=Math.abs(dx),ay=Math.abs(dy);
+  var hw=src.rw/2,hh=src.rh/2;
+  var x1,y1,x2,y2;
+  if(ay*hw>ax*hh){y1=src.cy+(dy>0?hh:-hh);x1=src.cx+(hh>0?dx*(hh/ay):0);y2=tgt.cy+(dy>0?-tgt.rh/2:tgt.rh/2);x2=tgt.cx+(tgt.rh/2>0?-dx*(tgt.rh/2/ay):0)}
+  else{x1=src.cx+(dx>0?hw:-hw);y1=src.cy+(hw>0?dy*(hw/ax):0);x2=tgt.cx+(dx>0?-tgt.rw/2:tgt.rw/2);y2=tgt.cy+(tgt.rw/2>0?-dy*(tgt.rw/2/ax):0)}
+  return{x1:x1,y1:y1,x2:x2,y2:y2}
+}
+function highlight(id){
+  var conn={};conn[id]=true;
+  (adj[id]||[]).forEach(function(nid){conn[nid]=true});
+  items.forEach(function(n){
+    var hit=conn[n.id];
+    boxEls[n.id].r.setAttribute('opacity',hit?1:0.12);
+    boxEls[n.id].t.setAttribute('opacity',hit?1:0.12);
+    if(n.id===id)boxEls[n.id].r.setAttribute('stroke-width','2.5');
+  });
+  while(linkLayer.firstChild)linkLayer.removeChild(linkLayer.firstChild);
+  var src=nmap[id];
+  (adj[id]||[]).forEach(function(nid){
+    var tgt=nmap[nid];if(!tgt)return;
+    var pts=edgePt(src,tgt);
+    linkLayer.appendChild(el('line',{x1:pts.x1,y1:pts.y1,x2:pts.x2,y2:pts.y2,stroke:cats[src.cat].s,'stroke-width':'1.2','stroke-dasharray':'3 3',opacity:'0.55'}));
+  });
+}
+function unhighlight(){
+  items.forEach(function(n){
+    boxEls[n.id].r.setAttribute('opacity',1);
+    boxEls[n.id].t.setAttribute('opacity',1);
+    boxEls[n.id].r.setAttribute('stroke-width',n.id===currentNode?'2.5':'1');
+  });
+  while(linkLayer.firstChild)linkLayer.removeChild(linkLayer.firstChild);
+}
+if(currentNode){highlight(currentNode)}
+})();
+</script>

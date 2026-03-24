@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.title %}{{ page.title }} — {% endif %}{{ site.title }}</title>
+<style>
+:root{--fg:rgb(45,45,43);--fg2:rgb(100,100,96);--bg:#fff;--bg2:rgb(248,247,244);--border:rgb(220,218,212);--link:#185FA5}
+@media(prefers-color-scheme:dark){:root{--fg:rgb(210,208,200);--fg2:rgb(155,153,146);--bg:rgb(30,30,28);--bg2:rgb(40,40,37);--border:rgb(65,64,60);--link:#85B7EB}}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.7;color:var(--fg);background:var(--bg);max-width:740px;margin:0 auto;padding:16px}
+a{color:var(--link);text-decoration:none}
+a:hover{text-decoration:underline}
+h1{font-size:22px;font-weight:600;margin:0 0 8px}
+h2{font-size:17px;font-weight:600;margin:24px 0 8px;color:var(--fg2)}
+p,ul,ol{margin:0 0 12px}
+code{background:var(--bg2);padding:2px 5px;border-radius:3px;font-size:14px}
+.breadcrumb{font-size:13px;color:var(--fg2);margin:0 0 12px}
+.breadcrumb a{color:var(--fg2)}
+hr{border:none;border-top:1px solid var(--border);margin:24px 0}
+.content{padding:8px 0 40px}
+</style>
+</head>
+<body>
+{% include diagram.html current=page.node %}
+{% if page.node %}
+<div class="breadcrumb"><a href="{{ site.baseurl }}/">← map</a></div>
+{% endif %}
+<div class="content">
+{{ content }}
+</div>
+</body>
+</html>

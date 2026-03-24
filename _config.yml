@@ -1,0 +1,10 @@
+title: Carbon Farming Knowledge Map
+description: Study map for carbon farming in Scotland
+baseurl: "/carbon-farming"
+markdown: kramdown
+permalink: pretty
+defaults:
+  - scope:
+      path: "notes"
+    values:
+      layout: default
